@@ -1,0 +1,122 @@
+name: Release
+
+# Builds macOS (universal: Apple Silicon + Intel) and Windows installers and publishes
+# them as a GitHub release.
+#
+# Trigger by pushing a tag that matches the app version in src-tauri/tauri.conf.json,
+# e.g. `git tag v0.2.0 && git push origin v0.2.0`, or run it manually from the Actions
+# tab (it then releases as v<version from tauri.conf.json>).
+#
+# The release is created as a draft first and only published once every platform has
+# built and uploaded, so a failed build never leaves a half-filled public release.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      release_id: ${{ steps.release.outputs.release_id }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read app version
+        id: version
+        run: |
+          version=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          tag="v$version"
+          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "$GITHUB_REF_NAME" != "$tag" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match the app version $version in src-tauri/tauri.conf.json. Bump the version or retag."
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Create (or reuse) draft release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          find_release() {
+            gh api "repos/$GITHUB_REPOSITORY/releases" --paginate \
+              --jq ".[] | select(.tag_name == \"$TAG\") | \"\(.id) \(.draft)\""
+          }
+          existing=$(find_release | head -n1)
+          if [ -n "$existing" ]; then
+            if [ "${existing#* }" != "true" ]; then
+              echo "::error::Release $TAG is already published. Bump the version to release again."
+              exit 1
+            fi
+            echo "Reusing existing draft for $TAG"
+          else
+            gh release create "$TAG" --draft --target "$GITHUB_SHA" \
+              --title "MAK Visualizer $TAG" \
+              --notes "Download the installer for your platform below. See the [README](https://github.com/$GITHUB_REPOSITORY#install) for first-launch steps (these builds are unsigned)."
+            existing=$(find_release | head -n1)
+          fi
+          echo "release_id=${existing% *}" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: create-release
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: --target universal-apple-darwin
+          - platform: windows-latest
+            args: ""
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Reads the pnpm version from package.json's packageManager field.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          # Both Mac architectures are needed for the universal build.
+          targets: ${{ startsWith(matrix.platform, 'macos') && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          releaseId: ${{ needs.create-release.outputs.release_id }}
+          args: ${{ matrix.args }}
+
+  publish-release:
+    needs: [create-release, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_ID: ${{ needs.create-release.outputs.release_id }}
+        run: gh api -X PATCH "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID" -F draft=false -f make_latest=true

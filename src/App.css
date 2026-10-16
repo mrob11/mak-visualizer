@@ -1,0 +1,308 @@
+:root {
+  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #eee;
+  background-color: #000;
+  -webkit-font-smoothing: antialiased;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
+
+.stage {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #555;
+}
+
+.layers {
+  position: relative;
+  height: 100%;
+}
+
+/* No mouse pointer sitting on the TV. The setup screen keeps its cursor. */
+.layers,
+.debug {
+  cursor: none;
+}
+
+.logo-overlay {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Positioned by LogoOverlay's bounce loop via transform: translate(). */
+.logo-mover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
+}
+
+.logo-pulse {
+  position: relative;
+  /* 40vh keeps the logo (821×665) within about a third of the screen height on wide
+     displays, leaving it room to roam. */
+  width: min(26vw, 40vh);
+  will-change: transform;
+}
+
+.logo-pulse img {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+}
+
+/* brightness(0) invert(1) renders the brand-red SVG as pure white without editing
+   the source asset. */
+.logo {
+  position: relative;
+  /* Keeps the white logo legible over bright presets. */
+  filter: brightness(0) invert(1) drop-shadow(0 0 18px rgba(0, 0, 0, 0.75));
+}
+
+/* A blurred, brightened copy behind the logo. Its filter never changes; only its
+   opacity is animated, which is cheap to do every frame. */
+.logo-glow {
+  position: absolute;
+  inset: 0;
+  filter: brightness(0) invert(1) blur(22px);
+  opacity: 0;
+  will-change: opacity;
+}
+
+.logo-overlay {
+  transition: opacity 0.4s ease;
+}
+
+.logo-overlay.hidden {
+  opacity: 0;
+}
+
+.toast {
+  position: absolute;
+  right: 16px;
+  bottom: 12px;
+  margin: 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  pointer-events: none;
+}
+
+.preset-menu {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  bottom: 16px;
+  width: min(440px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  background: rgba(10, 10, 10, 0.9);
+  border: 1px solid #333;
+  border-radius: 8px;
+  /* The stage hides the pointer; the menu needs it back. */
+  cursor: default;
+}
+
+.preset-menu header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid #262626;
+}
+
+.preset-menu h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.preset-menu header p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #888;
+}
+
+.preset-menu-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.preset-menu-actions button {
+  padding: 4px 12px;
+  font-size: 13px;
+}
+
+.preset-menu ul {
+  flex: 1;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+}
+
+.preset-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-left: 3px solid transparent;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.preset-row:hover {
+  background: #1a1a1a;
+}
+
+.preset-menu li.current .preset-row {
+  background: #1a1608;
+  border-left-color: #c9a227;
+}
+
+.preset-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.preset-name.off {
+  color: #666;
+}
+
+.now-playing {
+  flex-shrink: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #c9a227;
+}
+
+.input-status {
+  position: absolute;
+  left: 16px;
+  bottom: 12px;
+  margin: 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+}
+
+.visualizer {
+  height: 100%;
+  overflow: hidden;
+}
+
+.visualizer canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.debug {
+  position: relative;
+  height: 100%;
+}
+
+.debug canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.debug-info {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  color: #888;
+  font-size: 13px;
+}
+
+.setup {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 48px 24px;
+}
+
+.setup h1 {
+  margin: 0 0 8px;
+  font-size: 1.6rem;
+}
+
+.hint {
+  color: #999;
+}
+
+kbd {
+  padding: 1px 6px;
+  border: 1px solid #555;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
+.devices {
+  list-style: none;
+  padding: 0;
+  margin: 24px 0;
+}
+
+.devices li + li {
+  margin-top: 4px;
+}
+
+.devices label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.devices label:has(input:checked) {
+  border-color: #c9a227;
+  background: #1a1608;
+}
+
+.warning {
+  color: #e0a030;
+}
+
+.error pre {
+  white-space: pre-wrap;
+  color: #f77;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+button {
+  font: inherit;
+  padding: 8px 18px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #1c1c1c;
+  color: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
