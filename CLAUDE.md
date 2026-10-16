@@ -52,6 +52,7 @@ No lint or test tooling is set up yet.
 - Butterchurn compiles preset equations with `new Function`, so any CSP added to `tauri.conf.json` (currently `null`) must allow `'unsafe-eval'`.
 - `src-tauri/` — Rust shell. `tauri.conf.json` holds window config; `capabilities/` holds Tauri v2 permission grants; `src/lib.rs` registers plugins and commands.
 - Kiosk mode (`src-tauri/src/lib.rs`, toggled from `src/kiosk.ts`) is macOS *simple* fullscreen plus always-on-top, deliberately not native fullscreen: a native-fullscreen Space gets swapped out when another app takes focus, putting the desktop on the TV. Release builds start in kiosk mode, dev builds start windowed. While in kiosk mode, the window is unminimized or reshown if something hides it; focus itself is not stolen back. A `keepawake` display + idle-sleep assertion is held for the app's lifetime (check with `pmset -g assertions`). The stage hides the cursor via CSS.
+- `src-tauri/app-icon.svg` — source for the app/bundle icons (brand-red logo on a black rounded square, macOS icon-grid margins). After editing it, regenerate with `pnpm tauri icon src-tauri/app-icon.svg` and delete the `icons/android` and `icons/ios` folders it also creates (desktop-only app).
 - `src-tauri/Info.plist` — merged into the macOS bundle; supplies `NSMicrophoneUsageDescription`, without which `getUserMedia` fails in the webview. Don't remove it.
 
 ## Keyboard shortcuts
