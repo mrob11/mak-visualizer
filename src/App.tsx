@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { SavedInput, loadSavedInput } from "./audio/inputDevices";
 import { toggleKiosk } from "./kiosk";
-import { DeviceSelector } from "./setup/DeviceSelector";
+import { SettingsPanel } from "./setup/SettingsPanel";
 import { Stage } from "./Stage";
 import { StageErrorBoundary } from "./StageErrorBoundary";
 import "./App.css";
@@ -23,20 +23,23 @@ function App() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  if (showSetup || !savedInput) {
-    return (
-      <DeviceSelector
-        saved={savedInput}
-        onSave={setSavedInput}
-        onClose={() => setShowSetup(false)}
-      />
-    );
-  }
-
+  // The panel sits over the stage rather than replacing it, so the visuals (and their
+  // hotkeys) keep running and setting changes show up live.
   return (
-    <StageErrorBoundary>
-      <Stage input={savedInput} />
-    </StageErrorBoundary>
+    <>
+      {savedInput && (
+        <StageErrorBoundary>
+          <Stage input={savedInput} />
+        </StageErrorBoundary>
+      )}
+      {(showSetup || !savedInput) && (
+        <SettingsPanel
+          saved={savedInput}
+          onSave={setSavedInput}
+          onClose={() => setShowSetup(false)}
+        />
+      )}
+    </>
   );
 }
 

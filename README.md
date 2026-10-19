@@ -50,9 +50,9 @@ The builds aren't code-signed, so the OS warns on first launch:
 | `-` / `=` | Kick pulse sensitivity down / up (−5 to +5) |
 | `0` | Reset kick sensitivity |
 | `B` | Level-check view: spectrum, waveform, RMS and clip indicator |
-| `D` | Audio input setup |
+| `D` | Settings panel: audio input, logo, kick sensitivity, fullscreen, and the visualization list |
 | `F` | Toggle fullscreen (kiosk) mode |
-| `Esc` | Close the menu or setup screen |
+| `Esc` | Close the menu or settings panel |
 
 Logo visibility, kick sensitivity, the visualization rotation and the chosen input all persist across restarts.
 

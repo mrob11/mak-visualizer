@@ -21,6 +21,11 @@ fn set_kiosk(window: &WebviewWindow, on: bool) -> tauri::Result<()> {
 }
 
 #[tauri::command]
+fn kiosk_enabled(window: WebviewWindow) -> bool {
+    kiosk_on(&window)
+}
+
+#[tauri::command]
 fn toggle_kiosk(window: WebviewWindow) -> tauri::Result<bool> {
     let on = !kiosk_on(&window);
     set_kiosk(&window, on)?;
@@ -50,7 +55,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .manage(Kiosk(AtomicBool::new(false)))
-        .invoke_handler(tauri::generate_handler![toggle_kiosk])
+        .invoke_handler(tauri::generate_handler![kiosk_enabled, toggle_kiosk])
         .setup(|app| {
             // Hold display- and idle-sleep assertions for as long as the app runs: no
             // screensaver, no display sleep, no system sleep mid-set. macOS releases

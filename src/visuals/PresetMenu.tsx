@@ -2,11 +2,12 @@ import { useEffect, useMemo, useRef } from "react";
 import { updateSettings, useSettings } from "../settings";
 import { presetNames, requestPreset, useCurrentPreset } from "./presetLibrary";
 
-// Toggled with V. Checked presets are in the cycle; the one on screen is marked.
-// Clicking a row plays that preset; only the checkbox itself changes the cycle.
-// The visuals keep running behind it, and ←/→ still work while it's open, so you can
-// preview presets and cull them as you go.
-export function PresetMenu({ onClose }: { onClose: () => void }) {
+// Checked presets are in the cycle; the one on screen is marked. Clicking a row plays
+// that preset; only the checkbox itself changes the cycle. The visuals keep running
+// behind it, and ←/→ still work while it's open, so you can preview presets and cull
+// them as you go. Shown on its own by V, and as a page of the D settings panel.
+// `onClose` adds a Close button (the panel has its own).
+export function PresetList({ onClose }: { onClose?: () => void }) {
   const { disabledPresets } = useSettings();
   const current = useCurrentPreset();
   const disabled = useMemo(() => new Set(disabledPresets), [disabledPresets]);
@@ -28,7 +29,7 @@ export function PresetMenu({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <aside className="preset-menu">
+    <div className="preset-list">
       <header>
         <div>
           <h2>Visualizations</h2>
@@ -40,7 +41,7 @@ export function PresetMenu({ onClose }: { onClose: () => void }) {
           <button onClick={() => updateSettings({ disabledPresets: [] })} disabled={disabled.size === 0}>
             Enable all
           </button>
-          <button onClick={onClose}>Close</button>
+          {onClose && <button onClick={onClose}>Close</button>}
         </div>
       </header>
       <ul>
@@ -69,6 +70,15 @@ export function PresetMenu({ onClose }: { onClose: () => void }) {
           );
         })}
       </ul>
+    </div>
+  );
+}
+
+// Toggled with V.
+export function PresetMenu({ onClose }: { onClose: () => void }) {
+  return (
+    <aside className="preset-menu">
+      <PresetList onClose={onClose} />
     </aside>
   );
 }
