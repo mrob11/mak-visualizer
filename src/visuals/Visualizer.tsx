@@ -3,6 +3,7 @@ import butterchurnModule from "butterchurn";
 import { AudioEngine } from "../audio/audioEngine";
 import { getSettings, subscribeSettings } from "../settings";
 import { onPresetRequest, presetNames, presets, setCurrentPreset } from "./presetLibrary";
+import { customPresetImages } from "./presets";
 
 // Butterchurn's UMD build exports `{ default: Butterchurn }`, and Vite's CJS interop
 // doesn't always unwrap it, so take whichever shape arrives.
@@ -71,6 +72,7 @@ export function Visualizer({ engine }: { engine: AudioEngine }) {
       return;
     }
     visualizer.connectAudio(engine.bus);
+    visualizer.loadExtraImages(customPresetImages());
 
     const loadPreset = (name: string, blendSeconds: number): boolean => {
       try {

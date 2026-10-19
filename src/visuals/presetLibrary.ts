@@ -1,7 +1,8 @@
 import { useSyncExternalStore } from "react";
 import butterchurnPresets from "butterchurn-presets";
+import { customPresets } from "./presets";
 
-export const presets = butterchurnPresets.getPresets();
+export const presets = { ...butterchurnPresets.getPresets(), ...customPresets };
 // Alphabetical, ignoring case, for the menu.
 export const presetNames = Object.keys(presets).sort((a, b) =>
   a.localeCompare(b, undefined, { sensitivity: "base" }),

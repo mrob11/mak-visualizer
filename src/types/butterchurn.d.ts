@@ -15,8 +15,16 @@ declare module "butterchurn" {
     height?: number;
   }
 
+  // Extra textures presets can sample as `uniform sampler2D sampler_<name>;`.
+  export interface ExtraImage {
+    data: string; // An image URL, usually a data: URL.
+    width: number;
+    height: number;
+  }
+
   export interface Visualizer {
     connectAudio(node: AudioNode): void;
+    loadExtraImages(images: Record<string, ExtraImage>): void;
     disconnectAudio(node: AudioNode): void;
     loadPreset(preset: Preset, blendSeconds?: number): void;
     setRendererSize(width: number, height: number, opts?: RendererSizeOptions): void;
