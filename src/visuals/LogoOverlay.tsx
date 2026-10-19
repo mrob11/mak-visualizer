@@ -30,8 +30,38 @@ const SWAY_DEG = 6;
 const SWAY_IDLE = 0.2; // Fraction of the sway that remains when the room is quiet.
 const MAX_TILT_DEG = 28;
 const PERSPECTIVE_PX = 800;
-// Extra bounce inset for the tilt's perspective growth, as a fraction of logo size.
-const TILT_MARGIN = 0.04;
+
+const DEG = Math.PI / 180;
+
+// Half-width and half-height on screen of a halfW × halfH box after the pulse's
+// `perspective() rotateX() rotateY() scale()` transform (about its centre), taken from
+// its projected corners. The artwork fills its viewBox edge to edge, so bouncing on
+// this makes the logo itself meet the wall.
+function projectedHalfSize(
+  halfW: number,
+  halfH: number,
+  scale: number,
+  rotateXDeg: number,
+  rotateYDeg: number,
+): [number, number] {
+  const [cosX, sinX] = [Math.cos(rotateXDeg * DEG), Math.sin(rotateXDeg * DEG)];
+  const [cosY, sinY] = [Math.cos(rotateYDeg * DEG), Math.sin(rotateYDeg * DEG)];
+  let maxX = 0;
+  let maxY = 0;
+  for (const cx of [-halfW, halfW]) {
+    for (const cy of [-halfH, halfH]) {
+      // rotateY, then rotateX, then perspective (CSS applies the list right to left).
+      const x = cx * scale * cosY;
+      const z1 = -cx * scale * sinY;
+      const y = cy * scale * cosX - z1 * sinX;
+      const z = cy * scale * sinX + z1 * cosX;
+      const w = 1 - z / PERSPECTIVE_PX;
+      maxX = Math.max(maxX, Math.abs(x / w));
+      maxY = Math.max(maxY, Math.abs(y / w));
+    }
+  }
+  return [maxX, maxY];
+}
 
 export function LogoOverlay({ engine, visible }: { engine: AudioEngine; visible: boolean }) {
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -63,11 +93,6 @@ export function LogoOverlay({ engine, visible }: { engine: AudioEngine; visible:
     resizeObserver.observe(overlayEl);
     resizeObserver.observe(moverEl);
 
-    // The pulse scales around the logo's centre, so bounce early enough that a kick
-    // (or the tilt's perspective) at an edge doesn't push it off screen.
-    const pulseMargin = (size: number) =>
-      (size * (KICK_SCALE + LEVEL_SCALE)) / 2 + size * TILT_MARGIN;
-
     // Start somewhere random, heading diagonally in a random direction.
     let x = Math.random() * Math.max(0, screenW - logoW);
     let y = Math.random() * Math.max(0, screenH - logoH);
@@ -93,20 +118,8 @@ export function LogoOverlay({ engine, visible }: { engine: AudioEngine; visible:
       const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
 
-      // Read each frame, like the settings below, so changes apply immediately.
+      // Read each frame so changes apply immediately.
       const { kickSensitivity, logoSpeed } = getSettings();
-      const step = (DRIFT_SPEED * logoSpeed * screenH * dt) / Math.SQRT2;
-      const minX = pulseMargin(logoW);
-      const minY = pulseMargin(logoH);
-      const maxX = Math.max(minX, screenW - logoW - minX);
-      const maxY = Math.max(minY, screenH - logoH - minY);
-      x += dirX * step;
-      y += dirY * step;
-      if (x <= minX) [x, dirX] = [minX, 1];
-      else if (x >= maxX) [x, dirX] = [maxX, -1];
-      if (y <= minY) [y, dirY] = [minY, 1];
-      else if (y >= maxY) [y, dirY] = [maxY, -1];
-
       const { hit, level } = detector.read(dt, kickSensitivity);
       pulse *= Math.exp(-dt / PULSE_DECAY_SECONDS);
       // A hit's level already cleared the detector's peak-fraction threshold.
@@ -135,12 +148,28 @@ export function LogoOverlay({ engine, visible }: { engine: AudioEngine; visible:
       const clampTilt = (deg: number) => Math.max(-MAX_TILT_DEG, Math.min(MAX_TILT_DEG, deg));
       const rotateX = clampTilt(tiltX + sway * Math.sin(elapsed * 1.3));
       const rotateY = clampTilt(tiltY + sway * Math.sin(elapsed * 0.9 + 1));
+      const scale = 1 + pulse * KICK_SCALE + level * LEVEL_SCALE;
+
+      // Bounce where the logo as drawn this frame meets the screen edge. A kick at a
+      // wall grows it into the wall, and the clamp keeps that edge pinned there.
+      const [halfW, halfH] = projectedHalfSize(logoW / 2, logoH / 2, scale, rotateX, rotateY);
+      const minX = halfW - logoW / 2;
+      const minY = halfH - logoH / 2;
+      const maxX = Math.max(minX, screenW - logoW / 2 - halfW);
+      const maxY = Math.max(minY, screenH - logoH / 2 - halfH);
+      const step = (DRIFT_SPEED * logoSpeed * screenH * dt) / Math.SQRT2;
+      x += dirX * step;
+      y += dirY * step;
+      if (x <= minX) [x, dirX] = [minX, 1];
+      else if (x >= maxX) [x, dirX] = [maxX, -1];
+      if (y <= minY) [y, dirY] = [minY, 1];
+      else if (y >= maxY) [y, dirY] = [maxY, -1];
 
       // Only transform and opacity change per frame, so this stays on the compositor.
       moverEl.style.transform = `translate(${x}px, ${y}px)`;
       pulseEl.style.transform =
         `perspective(${PERSPECTIVE_PX}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) ` +
-        `scale(${1 + pulse * KICK_SCALE + level * LEVEL_SCALE})`;
+        `scale(${scale})`;
       glowEl.style.opacity = String(Math.min(1, pulse * 0.9 + level * LEVEL_GLOW));
     };
     frame = requestAnimationFrame(tick);
