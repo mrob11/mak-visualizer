@@ -121,6 +121,6 @@ The tag must match the version or the workflow fails early. You can also run the
 
 ## License
 
-The code is [MIT licensed](LICENSE): use it however you like. The **Men Amongst Kings name and logo** (`src/assets/mak-logo.svg`) are not covered by that license and remain all rights reserved. If you fork this, swap in your own logo.
+The code is [MIT licensed](LICENSE): use it however you like. The **Men Amongst Kings name and logo** (`src/assets/mak-logo.svg` and its white copy) are not covered by that license and remain all rights reserved. If you fork this, swap in your own logo.
 
 Butterchurn and `butterchurn-presets` are installed from npm and are MIT licensed by their authors.

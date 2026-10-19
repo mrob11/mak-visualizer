@@ -63,12 +63,13 @@ body,
   user-select: none;
 }
 
-/* brightness(0) invert(1) renders the brand-red SVG as pure white without editing
-   the source asset. */
+/* The logo is a white copy of the brand-red SVG (mak-logo-white.svg). Don't recolour
+   it with filter: brightness(0) invert(1): the production CSS minifier rewrites that
+   to invert(), which WebKit renders black. */
 .logo {
   position: relative;
   /* Keeps the white logo legible over bright presets. */
-  filter: brightness(0) invert(1) drop-shadow(0 0 18px rgba(0, 0, 0, 0.75));
+  filter: drop-shadow(0 0 18px rgba(0, 0, 0, 0.75));
 }
 
 /* A blurred, brightened copy behind the logo. Its filter never changes; only its
@@ -76,7 +77,7 @@ body,
 .logo-glow {
   position: absolute;
   inset: 0;
-  filter: brightness(0) invert(1) blur(22px);
+  filter: blur(22px);
   opacity: 0;
   will-change: opacity;
 }

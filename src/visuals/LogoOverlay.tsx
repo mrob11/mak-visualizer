@@ -3,7 +3,7 @@ import { AudioEngine } from "../audio/audioEngine";
 import { createKickDetector } from "../audio/kickDetector";
 import { createLevelMeter } from "../audio/levelMeter";
 import { getSettings } from "../settings";
-import logoUrl from "../assets/mak-logo.svg";
+import logoUrl from "../assets/mak-logo-white.svg";
 
 // How far the logo grows on a full-strength kick, and how much it breathes with
 // the continuous low end between hits.
