@@ -14,7 +14,7 @@ const LEVEL_GLOW = 0.05;
 // Seconds for a pulse to fall to ~37%. Short reads as a punch rather than a swell.
 const PULSE_DECAY_SECONDS = 0.13;
 // DVD-screensaver drift speed, as a fraction of the screen height per second, so it
-// looks the same on the laptop and the TV.
+// looks the same on the laptop and the TV. Scaled by the logoSpeed setting.
 const DRIFT_SPEED = 0.12;
 
 // 3D wobble. The tilt is a damped spring pulled toward a lean in the direction of
@@ -93,7 +93,9 @@ export function LogoOverlay({ engine, visible }: { engine: AudioEngine; visible:
       const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
 
-      const step = (DRIFT_SPEED * screenH * dt) / Math.SQRT2;
+      // Read each frame, like the settings below, so changes apply immediately.
+      const { kickSensitivity, logoSpeed } = getSettings();
+      const step = (DRIFT_SPEED * logoSpeed * screenH * dt) / Math.SQRT2;
       const minX = pulseMargin(logoW);
       const minY = pulseMargin(logoH);
       const maxX = Math.max(minX, screenW - logoW - minX);
@@ -105,16 +107,17 @@ export function LogoOverlay({ engine, visible }: { engine: AudioEngine; visible:
       if (y <= minY) [y, dirY] = [minY, 1];
       else if (y >= maxY) [y, dirY] = [maxY, -1];
 
-      // Read each frame so -/= adjustments apply immediately.
-      const { hit, level } = detector.read(dt, getSettings().kickSensitivity);
+      const { hit, level } = detector.read(dt, kickSensitivity);
       pulse *= Math.exp(-dt / PULSE_DECAY_SECONDS);
       // A hit's level already cleared the detector's peak-fraction threshold.
       if (hit) pulse = Math.max(pulse, level);
 
       // Lean into the direction of travel: rotating around Y turns the leading side
-      // away, around X tips the top or bottom.
-      const leanY = dirX * LEAN_DEG;
-      const leanX = -dirY * LEAN_DEG;
+      // away, around X tips the top or bottom. Eases off below normal speed, so a
+      // logo held still sits level rather than leaning toward nowhere.
+      const lean = LEAN_DEG * Math.min(1, logoSpeed);
+      const leanY = dirX * lean;
+      const leanX = -dirY * lean;
       if (hit) {
         const angle = Math.random() * 2 * Math.PI;
         spinX += Math.cos(angle) * KICK_SPIN * level;

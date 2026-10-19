@@ -49,12 +49,13 @@ The builds aren't code-signed, so the OS warns on first launch:
 | `L` | Show / hide the logo |
 | `-` / `=` | Kick pulse sensitivity down / up (−5 to +5) |
 | `0` | Reset kick sensitivity |
+| `[` / `]` | Logo speed down / up (still to 3×) |
 | `B` | Level-check view: spectrum, waveform, RMS and clip indicator |
 | `D` | Settings panel: audio input, logo, kick sensitivity, fullscreen, and the visualization list |
 | `F` | Toggle fullscreen (kiosk) mode |
 | `Esc` | Close the menu or settings panel |
 
-Logo visibility, kick sensitivity, the visualization rotation and the chosen input all persist across restarts.
+Logo visibility and speed, kick sensitivity, the visualization rotation and the chosen input all persist across restarts.
 
 ### Gig-day checklist
 

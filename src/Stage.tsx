@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { EngineStatus } from "./audio/audioEngine";
 import { SavedInput } from "./audio/inputDevices";
 import { useAudioEngine } from "./audio/useAudioEngine";
-import { getSettings, updateSettings, useSettings } from "./settings";
+import { LOGO_SPEED_STEP, getSettings, updateSettings, useSettings } from "./settings";
 import { DebugBars } from "./debug/DebugBars";
 import { LogoOverlay } from "./visuals/LogoOverlay";
 import { PresetMenu } from "./visuals/PresetMenu";
@@ -27,6 +27,11 @@ function formatSensitivity(steps: number): string {
   return `Kick sensitivity: ${steps > 0 ? "+" : ""}${steps}`;
 }
 
+function formatSpeed(multiplier: number): string {
+  if (multiplier === 0) return "Logo speed: still";
+  return `Logo speed: ${multiplier}×`;
+}
+
 export function Stage({ input }: { input: SavedInput }) {
   const { engine, status } = useAudioEngine(input);
   const settings = useSettings();
@@ -46,7 +51,7 @@ export function Stage({ input }: { input: SavedInput }) {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
-      const { kickSensitivity, logoVisible } = getSettings();
+      const { kickSensitivity, logoSpeed, logoVisible } = getSettings();
       switch (e.key) {
         case "b":
         case "B":
@@ -73,6 +78,14 @@ export function Stage({ input }: { input: SavedInput }) {
           break;
         case "0":
           setToast(formatSensitivity(updateSettings({ kickSensitivity: 0 }).kickSensitivity));
+          break;
+        case "[":
+        case "{":
+          setToast(formatSpeed(updateSettings({ logoSpeed: logoSpeed - LOGO_SPEED_STEP }).logoSpeed));
+          break;
+        case "]":
+        case "}":
+          setToast(formatSpeed(updateSettings({ logoSpeed: logoSpeed + LOGO_SPEED_STEP }).logoSpeed));
           break;
       }
     };

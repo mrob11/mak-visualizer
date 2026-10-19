@@ -7,7 +7,13 @@ import {
   unlockDeviceLabels,
 } from "../audio/inputDevices";
 import { toggleKiosk, useKiosk } from "../kiosk";
-import { KICK_SENSITIVITY_RANGE, updateSettings, useSettings } from "../settings";
+import {
+  KICK_SENSITIVITY_RANGE,
+  LOGO_SPEED_MAX,
+  LOGO_SPEED_STEP,
+  updateSettings,
+  useSettings,
+} from "../settings";
 
 type Status = "loading" | "ready" | "error";
 
@@ -19,6 +25,11 @@ interface Props {
 function formatSensitivity(steps: number): string {
   if (steps === 0) return "Default";
   return `${steps > 0 ? "+" : ""}${steps}`;
+}
+
+function formatSpeed(multiplier: number): string {
+  if (multiplier === 0) return "Still";
+  return `${multiplier}×`;
 }
 
 export function GeneralSettings({ saved, onSave }: Props) {
@@ -117,6 +128,27 @@ export function GeneralSettings({ saved, onSave }: Props) {
           />
           Show logo <kbd>L</kbd>
         </label>
+      </section>
+
+      <section className="setting">
+        <label htmlFor="logo-speed">
+          Logo speed <kbd>[</kbd> <kbd>]</kbd>
+        </label>
+        <div className="setting-row">
+          <input
+            id="logo-speed"
+            type="range"
+            min={0}
+            max={LOGO_SPEED_MAX}
+            step={LOGO_SPEED_STEP}
+            value={settings.logoSpeed}
+            onChange={(e) => updateSettings({ logoSpeed: Number(e.target.value) })}
+          />
+          <span className="setting-value">{formatSpeed(settings.logoSpeed)}</span>
+          <button onClick={() => updateSettings({ logoSpeed: 1 })} disabled={settings.logoSpeed === 1}>
+            Reset
+          </button>
+        </div>
       </section>
 
       <section className="setting">
