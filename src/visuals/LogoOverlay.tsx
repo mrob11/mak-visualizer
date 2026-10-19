@@ -17,8 +17,8 @@ const PULSE_DECAY_SECONDS = 0.13;
 // looks the same on the laptop and the TV. Scaled by the logoSpeed setting.
 const DRIFT_SPEED = 0.12;
 
-// 3D wobble. The tilt is a damped spring pulled toward a lean in the direction of
-// travel, so each bounce flips the lean and the logo swings past and settles.
+// 3D wobble. The tilt is a damped spring pulled toward a lean away from the direction
+// of travel, so each bounce flips the lean and the logo swings past and settles.
 const LEAN_DEG = 7;
 const WOBBLE_HZ = 1.4;
 // Below 1 the spring overshoots; lower is wobblier.
@@ -125,12 +125,12 @@ export function LogoOverlay({ engine, visible }: { engine: AudioEngine; visible:
       // A hit's level already cleared the detector's peak-fraction threshold.
       if (hit) pulse = Math.max(pulse, level);
 
-      // Lean into the direction of travel: rotating around Y turns the leading side
-      // away, around X tips the top or bottom. Eases off below normal speed, so a
+      // Lean away from the direction of travel, like it's being dragged along: rotating
+      // around Y brings the leading side toward the viewer, around X tips the top or bottom. Eases off below normal speed, so a
       // logo held still sits level rather than leaning toward nowhere.
       const lean = LEAN_DEG * Math.min(1, logoSpeed);
-      const leanY = dirX * lean;
-      const leanX = -dirY * lean;
+      const leanY = -dirX * lean;
+      const leanX = dirY * lean;
       if (hit) {
         const angle = Math.random() * 2 * Math.PI;
         spinX += Math.cos(angle) * KICK_SPIN * level;
