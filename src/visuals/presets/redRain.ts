@@ -1,5 +1,6 @@
 import type { Preset } from "butterchurn";
-import { GLYPHS, GLYPH_GRID } from "./glyphAtlas";
+import { RAIN_GLYPH_COUNT } from "./glyphAtlas";
+import { COLOURS_GLSL, GLYPH_GLSL, HASH_GLSL } from "./shaderLib";
 
 // Matrix-style digital rain in MAK red. Everything is drawn in the comp shader from
 // the frame equations' running totals, so nothing depends on the feedback buffer:
@@ -23,29 +24,9 @@ a.q4 = ${ROWS};
 `;
 
 const comp = `
-uniform sampler2D sampler_glyphs;
-
-#define GLYPH_GRID ${GLYPH_GRID}.0
-#define GLYPH_COUNT ${GLYPHS.length}.0
-// Cell width as a fraction of its height; matches the atlas cells (40 × 64).
-#define CELL_ASPECT 0.625
-
-const vec3 RED = vec3(0.875, 0.11, 0.227);
-// The leading glyph: a hot, pale red rather than white.
-const vec3 HOT = vec3(1.0, 0.5, 0.55);
-
-float hash11(float p) {
-  p = fract(p * 0.1031);
-  p *= p + 33.33;
-  p *= p + p;
-  return fract(p);
-}
-
-float hash21(vec2 p) {
-  vec3 p3 = fract(vec3(p.xyx) * 0.1031);
-  p3 += dot(p3, p3.yzx + 33.33);
-  return fract((p3.x + p3.y) * p3.z);
-}
+${GLYPH_GLSL}
+${COLOURS_GLSL}
+${HASH_GLSL}
 
 shader_body {
   float rows = q4;
@@ -76,14 +57,11 @@ shader_body {
   float cellSeed = hash21(cell);
   float rate = cellSeed > 0.9 ? 8.0 : mix(0.15, 1.2, cellSeed);
   float tick = mod(floor(q2 * rate + cellSeed * 50.0), 4096.0);
-  float g = floor(hash21(cell + tick * 17.0) * GLYPH_COUNT);
+  float g = floor(hash21(cell + tick * 17.0) * ${RAIN_GLYPH_COUNT}.0);
   vec2 lp = local;
   // Half the glyphs mirrored, as in the film.
   if (hash21(cell * 1.7 + 3.0) > 0.5) lp.x = 1.0 - lp.x;
-  vec2 atlasUv = (vec2(mod(g, GLYPH_GRID), floor(g / GLYPH_GRID)) + lp) / GLYPH_GRID;
-  // Gradients from the continuous grid, so the per-cell wrap doesn't pick a tiny mip
-  // level and draw seams along the cell edges.
-  float glyph = textureGrad(sampler_glyphs, atlasUv, dFdx(grid) / GLYPH_GRID, dFdy(grid) / GLYPH_GRID).a;
+  float glyph = glyphAt(g, lp, grid);
 
   float flash = 1.0 + 0.9 * q3;
   vec3 col = RED * glyph * trailLight * flash;
